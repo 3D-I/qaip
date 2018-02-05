@@ -25,7 +25,6 @@ class m1_qaip_config extends \phpbb\db\migration\migration
 	public function update_data()
 	{
 		return array(
-			array('config.add', array('threedi_qaip', '1.0.0-b3')),
 			array('config.add', array('qaip_css_center', '0')),
 		);
 	}
