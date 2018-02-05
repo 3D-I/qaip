@@ -2,15 +2,15 @@
 	"name": "threedi/qaip",
 	"type": "phpbb-extension",
 	"description": "Quote images as thumbnails.",
-	"homepage": "http://3di.space/32/",
-	"version": "1.0.0-b3",
-	"time": "2017-02-20",
+	"homepage": "http://3di.space",
+	"version": "1.0.1-beta",
+	"time": "2018-02-06",
 	"license": "GPL-2.0",
 	"authors": [
 		{
 			"name": "3Di",
 			"email": "three3di@hotmail.it",
-			"homepage": "http://3di.space/32/",
+			"homepage": "http://3di.space",
 			"role": "Lead Developer"
 		}
 	],
