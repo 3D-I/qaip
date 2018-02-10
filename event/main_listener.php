@@ -204,22 +204,10 @@ class main_listener implements EventSubscriberInterface
 				 */
 				preg_match_all('/\[attachment=\d+\](.*)\[\/attachment\]/U', $message_parser->message, $attach_in_quote);
 
-				/**
-				 * Quering the DB (Polls require attention)
-				 */
-				if (count($post_data['poll_options']) || !empty($post_data['poll_title']))
-				{
-					$order_by = 'attach_id DESC';
-				}
-				else
-				{
-					$order_by = 'attach_id ASC';
-				}
-
 				$sql_attach = 'SELECT attach_id, post_msg_id, real_filename, mimetype
 					FROM ' . ATTACHMENTS_TABLE . '
 					WHERE post_msg_id = ' . $post_id . '
-					ORDER BY ' . $order_by . '';
+					ORDER BY attach_id ASC';
 
 				$result_attach = $this->db->sql_query($sql_attach);
 
