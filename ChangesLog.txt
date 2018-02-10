@@ -1,7 +1,7 @@
 QAIP - ChangesLog
 
 1.0.1-beta - 06-feb-2018
- - FIX - Topics polls attachments order
+ - remove redundant code
 
 1.0.0-b3 - 24-mar-2017
  - FIX - Topics polls - BUG: ( https://github.com/3D-I/qaip/issues/1 )
