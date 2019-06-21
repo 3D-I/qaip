@@ -3,7 +3,7 @@
  *
  * Quote attachments in posts. An extension for the phpBB Forum Software package.
  *
- * @copyright (c) 2017, 3Di, http://3di.space/32/
+ * @copyright (c) 2019, 3Di, https://phpbbstudio.com
  * @license GNU General Public License, version 2 (GPL-2.0)
  *
  */
@@ -22,36 +22,30 @@ class ext extends \phpbb\extension\base
 	 */
 	public function is_enableable()
 	{
-		if ( $this->phpbb_requirements() )
+		$is_enableable = true;
+
+		$user = $this->container->get('user');
+
+		$user->add_lang_ext('threedi/qaip', 'ext_require');
+
+		$lang = $user->lang;
+
+		if (!(phpbb_version_compare(PHPBB_VERSION, '3.2.5', '>=') && phpbb_version_compare(PHPBB_VERSION, '3.3.0@dev', '<')))
 		{
-			return true;
+			/**
+			 * Despite it seems wrong that's the right approach and not an error in coding.
+			 * Done this way in order to avoid PHP errors like
+			 * "Indirect modification of overloaded property phpbb/user::$lang has no effect"
+			 * or " Can't use method return value in write context" depending on the use case.
+			 * Discussed here: https://www.phpbb.com/community/viewtopic.php?p=14724151#p14724151
+			*/
+			$lang['EXTENSION_NOT_ENABLEABLE'] .= '<br>' . $user->lang('ERROR_PHPBB_VERSION', '3.2.5', '3.3.0@dev');
+
+			$is_enableable = false;
 		}
-		else
-		{
-			$this->verbose_it();
-		}
-	}
 
-	/**
-	 * Check phpBB compatibility
-	 * Requires phpBB 3.1.6 or greater
-	 *
-	 * @return bool
-	 */
-	protected function phpbb_requirements()
-	{
-		return phpbb_version_compare(PHPBB_VERSION, '3.1.6', '>=');
-	}
+		$user->lang = $lang;
 
-	/**
-	 * Let's tell the user what exactly is going on on failure, provides a backlink.
-	 *
-	 * Using the User Object for the BC's sake.
-	 */
-	protected function verbose_it()
-	{
-		$this->container->get('user')->add_lang_ext('threedi/qaip', 'ext_require');
-
-		trigger_error($this->container->get('user')->lang['EXTENSION_REQUIREMENTS_NOTICE'] . adm_back_link(append_sid('index.' . $this->container->getParameter('core.php_ext'), 'i=acp_extensions&amp;mode=main')), E_USER_WARNING);
+		return $is_enableable;
 	}
 }

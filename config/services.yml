@@ -6,6 +6,7 @@ services:
             - '@config'
             - '@dbal.conn'
             - '@template'
-            - '@user'
+            - '@language'
+            - '%tables.attachments%'
         tags:
             - { name: event.listener }

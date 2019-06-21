@@ -3,19 +3,13 @@
  *
  * Quote attachments in posts. An extension for the phpBB Forum Software package.
  *
- * @copyright (c) 2017, 3Di, http://3di.space/32/
+ * @copyright (c) 2019, 3Di, https://phpbbstudio.com
  * @license GNU General Public License, version 2 (GPL-2.0)
  *
- * Some code, adapted and improved, inspired by Татьяна5's editor_of_attachments.
- * CSS resizer, adapted and improved, inspired by quotethumbnails of HiFiKabin.
- * ACP posting setting, adapted, inspired by Lightbox of VSE.
  */
 
 namespace threedi\qaip\event;
 
-/**
- * @ignore
- */
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
@@ -35,41 +29,54 @@ class main_listener implements EventSubscriberInterface
 	/** @var \phpbb\template\template */
 	protected $template;
 
-	/** @var \phpbb\user */
-	protected $user;
+	/* @var \phpbb\language\language */
+	protected $language;
+
+	/** @var string Topics table */
+	protected $attachments_table;
 
 	/**
-	* Constructor
-	*
-	* @param \phpbb\auth\auth					$auth
-	* @param \phpbb\config\config				$config
-	* @param \phpbb\db\driver\driver_interface	$db
-	* @param \phpbb\template\template			$template			Template object
-	* @param \phpbb\user						$user
-	*/
-
-	public function __construct(\phpbb\auth\auth $auth, \phpbb\config\config $config, \phpbb\db\driver\driver_interface $db, \phpbb\template\template $template, \phpbb\user $user)
+	 * Constructor
+	 *
+	 * @param  \phpbb\auth\auth						$auth					Auth object
+	 * @param  \phpbb\config\config					$config					Config object
+	 * @param  \phpbb\db\driver\driver_interface	$db						Database object
+	 * @param  \phpbb\template\template				$template				Template object
+	 * @param  \phpbb\language\language				$language				Language object
+	 * @param  string								$attachments_table		Attachments table
+	 * @return void
+	 * @access public
+	 */
+	public function __construct(
+		\phpbb\auth\auth $auth,
+		\phpbb\config\config $config,
+		\phpbb\db\driver\driver_interface $db,
+		\phpbb\template\template $template,
+		\phpbb\language\language $language,
+		$attachments_table
+	)
 	{
-		$this->auth		=	$auth;
-		$this->config	=	$config;
-		$this->db		=	$db;
-		$this->template	=	$template;
-		$this->user		=	$user;
+		$this->auth					= $auth;
+		$this->config				= $config;
+		$this->db					= $db;
+		$this->template				= $template;
+		$this->language				= $language;
+		$this->attachments_table	= $attachments_table;
 	}
 
 	/**
-	* Assign functions defined in this class to event listeners in the core
-	*
-	* @return array
-	* @static
-	* @access public
-	*/
+	 * Assign functions defined in this class to event listeners in the core
+	 *
+	 * @return array
+	 * @static
+	 * @access public
+	 */
 	static public function getSubscribedEvents()
 	{
 		return array(
-			'core.page_header_after'				=>	'qaip_template_switch',
-			'core.acp_board_config_edit_add'		=>	'add_qaip_acp_config',
-			'core.posting_modify_template_vars'		=>	'quote_img_in_posts',
+			'core.page_header_after'				=> 'qaip_template_switch',
+			'core.acp_board_config_edit_add'		=> 'qaip_acp_config',
+			'core.posting_modify_template_vars'		=> 'qaip_quote_img_in_posts',
 		);
 	}
 
@@ -77,11 +84,13 @@ class main_listener implements EventSubscriberInterface
 	 * Template switch over all
 	 *
 	 * @event core.page_header_after
+	 * @return void
+	 * @access public
 	 */
 	public function qaip_template_switch($event)
 	{
 		$this->template->assign_vars(array(
-			'S_QAIP_CENTER'	=>	($this->config['qaip_css_center']) ? true : false,
+			'S_QAIP_CENTER'	=>	(bool) $this->config['qaip_css_center'],
 		));
 	}
 
@@ -89,189 +98,145 @@ class main_listener implements EventSubscriberInterface
 	 * Add QAIP settings to the ACP
 	 *
 	 * @event core.acp_board_config_edit_add
+	 * @param  \phpbb\event\data	$event		The event object
+	 * @return void
+	 * @access public
 	 */
-	public function add_qaip_acp_config($event)
+	public function qaip_acp_config($event)
 	{
-		if ($event['mode'] === 'post' && array_key_exists('legend3', $event['display_vars']['vars']))
+		if ($event['mode'] === 'post' && array_key_exists('legend1', $event['display_vars']['vars']))
 		{
-			/*
-			 * Load language file only when necessary
-			 */
-			$this->user->add_lang_ext('threedi/qaip', 'common');
+			/* Load our language file only if necessary */
+			$this->language->add_lang('common', 'threedi/qaip');
 
 			$display_vars = $event['display_vars'];
-			/*
-			 * Set configs
-			 */
-			$my_config_vars = array(
+
+			/* Set configs */
+			$qaip_config_vars = [
 				'legend_qaip'		=> 'QAIP_SETTINGS',
-				'qaip_css_center'	=> array('lang' => 'QAIP_CSS_RESIZER', 'validate' => 'bool', 'type' => 'radio:yes_no', 'explain' => true),
-			);
-			/*
-			 * Validate configs
-			 */
-			$display_vars['vars'] = phpbb_insert_config_array($display_vars['vars'], $my_config_vars, array('before' => 'legend3'));
+				'qaip_css_center'	=> ['lang' => 'QAIP_CSS_RESIZER', 'validate' => 'bool', 'type' => 'radio:yes_no', 'explain' => true],
+			];
+
+			/* Validate configs */
+			$display_vars['vars'] = phpbb_insert_config_array($display_vars['vars'], $qaip_config_vars, ['before' => 'legend1']);
 
 			$event['display_vars'] = $display_vars;
 		}
 	}
 
 	/**
-	 * This event allows you to modify template variables for the posting screen
+	 * Brings back to life quoted attachment's image(s)
 	 *
 	 * @event core.posting_modify_template_vars
+	 * @param  \phpbb\event\data	$event		The event object
+	 * @return void
+	 * @access public
 	 */
-	public function quote_img_in_posts($event)
+	public function qaip_quote_img_in_posts($event)
 	{
-		$page_data		=	$event['page_data'];
-		$message_parser	=	$event['message_parser'];
-		$post_data		=	$event['post_data'];
-		$mode			=	$event['mode'];
-		$post_id		=	$event['post_id'];
-		$forum_id		=	$event['forum_id'];
-		$submit			=	$event['submit'];
-		$preview		=	$event['preview'];
-		$refresh		=	$event['refresh'];
+		$page_data		= $event['page_data'];
+		$message_parser	= $event['message_parser'];
+		$post_data		= $event['post_data'];
+		$mode			= $event['mode'];
+		$post_id		= (int) $event['post_id'];
+		$forum_id		= (int) $event['forum_id'];
+		$submit			= $event['submit'];
+		$preview		= $event['preview'];
+		$refresh		= $event['refresh'];
 
 		if ($mode == 'quote' && !$submit && !$preview && !$refresh)
 		{
-			/**
-			 * Is a topic poll?
-			 */
-			if (sizeof($post_data['poll_options']) || !empty($post_data['poll_title']))
+			/* Is it a topic poll? */
+			if (count($post_data['poll_options']) || !empty($post_data['poll_title']))
 			{
 				$post_data_poll = $post_data['post_text'];
-				/**
-				* Taking care of phpBB versions
-				*/
-				if ( phpbb_version_compare(PHPBB_VERSION, '3.2.0-dev', '>=') )
-				{
-				/**
-				 * phpBB 3.2 - stressing the ending '[/quote]\n'
-				 */
-				$post_data_poll = substr_replace( $post_data_poll, "[/quote]", - 10 );
-				}
-				else
-				{
-				/**
-				 * phpBB 3.1 - stressing the ending '[/quote]\n'
-				 */
-				$post_data_poll = substr_replace( $post_data_poll, "[/quote]", - 9 );
-				}
-				/**
-				 * We need to add add a trailing space at the end of the stripped parsed message
-				 * to avoid a potential bug, urls/smilies not correctly parsed after it
-				 * (see phpBB message parser code)
-				 */
-				$poll_space = " ";
-				$message_parser->message = "{$post_data_poll}{$poll_space}";
+
+				/* Stripping the ending '[/quote]\n' */
+				$post_data_poll = substr_replace($post_data_poll, "[/quote]", - 10);
+				$message_parser->message = "{$post_data_poll}";
 			}
-			/**
-			* Are BBcodes allowed?
-			*/
+
+			/* Are BBcodes allowed? */
 			if ($this->config['allow_bbcode'])
 			{
-				$img_open_tag	= ($this->auth->acl_get('f_bbcode', $forum_id) && $this->auth->acl_get('f_img', $forum_id)) ? '[img]' : ' ';
+				$img_open_tag	= ($this->auth->acl_get('f_bbcode', $forum_id) && $this->auth->acl_get('f_img', $forum_id)) ? '[img]' : '';
+				$img_close_tag	= ($this->auth->acl_get('f_bbcode', $forum_id) && $this->auth->acl_get('f_img', $forum_id)) ? '[/img]' : '';
 
-				$img_close_tag	= ($this->auth->acl_get('f_bbcode', $forum_id) && $this->auth->acl_get('f_img', $forum_id)) ? '[/img]' : ' ';
+				/* Stripping the ending '[/quote]\n' */
+				$message_parser->message = substr($message_parser->message, 0, strlen($message_parser->message) - 10);
 
-				/*
-				 * Let's extend the functionalities now
-				 */
-				$mode_view		= '&mode=view';
-				$url_open_tag	= '[url=';
-				$url_middle_tag	= ']';
-				$url_close_tag	= '[/url]';
-
-				/**
-				 * Array's creation
-				 */
-				$attach_in_quote = array();
-
-				/**
-				 * We have to take care of different versions here while stripping the ending '[/quote]\n'
-				 */
-				if ( phpbb_version_compare(PHPBB_VERSION, '3.2.0-dev', '>=') )
-				{
-					$message_parser->message = substr($message_parser->message, 0, strlen($message_parser->message) - 10);
-				}
-				else
-				{
-					$message_parser->message = substr($message_parser->message, 0, strlen($message_parser->message) - 9);
-				}
-				/**
-				 * Extracts the real filename and extension and put it to the array
-				 */
-				preg_match_all('/\[attachment=\d+\](.*)\[\/attachment\]/U', $message_parser->message, $attach_in_quote);
-
-				$sql_attach = 'SELECT attach_id, post_msg_id, real_filename, mimetype
-					FROM ' . ATTACHMENTS_TABLE . '
-					WHERE post_msg_id = ' . $post_id . '
-					ORDER BY attach_id ASC';
-
-				$result_attach = $this->db->sql_query($sql_attach);
+				/* Retrieve the necessary data to work with */
+				$attach_rows = $this->qaip_attach_rows($post_id);
 
 				/**
 				 * Transform quoted attached images as images again
 				 * No matters if they are links, placed inline or not, thumbnailed or not
 				 */
-				while ( $attach_row = $this->db->sql_fetchrow($result_attach) )
+				if (count($attach_rows))
 				{
-					if ( in_array($attach_row['real_filename'], $attach_in_quote[1]) )
-					{
-						if (strpos($attach_row['mimetype'], 'image/') !== false)
-						{
-							$message_parser->message = preg_replace('/\[attachment=\d+\]' . preg_quote($attach_row['real_filename']) . '\[\/attachment\]/', generate_board_url() . '/download/file.php?id=' . (int) $attach_row['attach_id'], $message_parser->message);
-						}
-						/**
-						 * Fixes a potential issue, are there files with the same real filename?
-						 */
-						$key_attach = array_search($attach_row['real_filename'], $attach_in_quote[1]);
-
-						if ($key_attach !== false)
-						{
-							/**
-							 * Destroy a single element of an array.
-							 */
-							unset($attach_in_quote[1][$key_attach]);
-						}
-					}
-					if (strpos($attach_row['mimetype'], 'image/') !== false)
+					foreach ($attach_rows as $attach_row)
 					{
 						$img_link = generate_board_url() . '/download/file.php?id=' . (int) $attach_row['attach_id'];
 
-						/**
-						 * Put the quoted image on a new line after its real filename
-						 * using a faster strings concatenation.
-						 */
-						$message_parser->message .= "\n" . "{$url_open_tag}{$img_link}{$mode_view}{$url_middle_tag}{$img_open_tag}{$img_link}{$img_close_tag}{$url_close_tag}";
+						/* Only images */
+						if (strpos($attach_row['mimetype'], 'image/') !== false)
+						{
+							/* If the attachments aren't INLINE there aren't filenames placed in the "post_text" */
+							if (strpos($message_parser->message, $attach_row['real_filename']) === false)
+							{
+								/* Put the quoted image(s) each on a new line after the post text */
+								$message_parser->message .= "\n[url={$img_link}&mode=view]{$img_open_tag}{$img_link}{$img_close_tag}[/url]";
+							}
+							else
+							{
+								/* Replace missing quoted images in the same place they were put INLINE */
+								$message_parser->message = str_replace(
+									$attach_row['real_filename'],
+									"[url={$img_link}&mode=view]{$img_open_tag}{$img_link}{$img_close_tag}[/url]",
+									$message_parser->message
+								);
+							}
+						}
 					}
 				}
-				/**
-				 * Free results
-				 */
-				$this->db->sql_freeresult($result_attach);
+
+				/* Destroy array and its associated data */
+				unset($attach_rows);
 
 				/**
-				 * Destroy variable and its associated data.
+				 * Add back the closing quote tag previously stripped away.
+				 * Basically close back the opened quote prior to send it back to the parser.
 				 */
-				unset($attach_row);
-
-				/**
-				 * We need to add the closing quote tag previously stripped away and a CR.
-				 * We add a trailing space also, at the end of the ending quote tag, to avoid a potential
-				 * bug, urls/smilies not correctly parsed after it (see phpBB message parser code)
-				 */
-				$end_quote_sp = "[/quote] ";
-				$end_quote_cr = "\n";
-				$message_parser->message .= "{$end_quote_sp}{$end_quote_cr}";
+				$message_parser->message .= '[/quote]';
 
 				$post_data['post_text'] = $message_parser->message;
 
-				$page_data = array_merge($page_data, array('MESSAGE' => $post_data['post_text']));
+				$page_data = array_merge($page_data, ['MESSAGE' => $post_data['post_text']]);
 
 				$event['page_data'] = $page_data;
 			}
 		}
+	}
+
+	/**
+	 * Retrieves the post's attachment data.
+	 *
+	 * @param  int		$post_id		The post identifier
+	 * @return array	$attach_rows	Array with attachments' data, empty array otherwise
+	 * @access protected
+	 */
+	protected function qaip_attach_rows($post_id)
+	{
+		$attach_rows = [];
+
+		$sql_attach = 'SELECT attach_id, post_msg_id, real_filename, mimetype
+			FROM ' . $this->attachments_table . '
+			WHERE post_msg_id = ' . (int) $post_id . '
+			ORDER BY attach_id DESC';
+		$result_attach = $this->db->sql_query($sql_attach);
+		$attach_rows = $this->db->sql_fetchrowset($result_attach);
+		$this->db->sql_freeresult($result_attach);
+
+		return $attach_rows;
 	}
 }
