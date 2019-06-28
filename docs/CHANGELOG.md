@@ -1,6 +1,11 @@
 3Di - Quote Attachments Img in Posts - Changes Log
 
-1.0.2-rc - 2019-06-20
+1.1.0 - 29-Jun-2019
+ - Use relative URL
+ - update version checker
+ - code housekeeping
+
+1.0.2-rc - 20-Jun-2019
  - remove suppport for 3.1
  - remove support for 3.1 anami style
  - FIX - filename being shown

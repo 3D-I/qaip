@@ -35,6 +35,9 @@ class main_listener implements EventSubscriberInterface
 	/** @var string Topics table */
 	protected $attachments_table;
 
+	/* @var string phpBB root path */
+	protected $root_path;
+
 	/**
 	 * Constructor
 	 *
@@ -44,6 +47,7 @@ class main_listener implements EventSubscriberInterface
 	 * @param  \phpbb\template\template				$template				Template object
 	 * @param  \phpbb\language\language				$language				Language object
 	 * @param  string								$attachments_table		Attachments table
+	 * @param  string								$root_path				phpBB root path
 	 * @return void
 	 * @access public
 	 */
@@ -53,7 +57,8 @@ class main_listener implements EventSubscriberInterface
 		\phpbb\db\driver\driver_interface $db,
 		\phpbb\template\template $template,
 		\phpbb\language\language $language,
-		$attachments_table
+		$attachments_table,
+		$root_path
 	)
 	{
 		$this->auth					= $auth;
@@ -61,7 +66,9 @@ class main_listener implements EventSubscriberInterface
 		$this->db					= $db;
 		$this->template				= $template;
 		$this->language				= $language;
+
 		$this->attachments_table	= $attachments_table;
+		$this->root_path			= $root_path;
 	}
 
 	/**
@@ -73,11 +80,11 @@ class main_listener implements EventSubscriberInterface
 	 */
 	static public function getSubscribedEvents()
 	{
-		return array(
+		return [
 			'core.page_header_after'				=> 'qaip_template_switch',
 			'core.acp_board_config_edit_add'		=> 'qaip_acp_config',
 			'core.posting_modify_template_vars'		=> 'qaip_quote_img_in_posts',
-		);
+		];
 	}
 
 	/**
@@ -89,9 +96,10 @@ class main_listener implements EventSubscriberInterface
 	 */
 	public function qaip_template_switch($event)
 	{
-		$this->template->assign_vars(array(
-			'S_QAIP_CENTER'	=>	(bool) $this->config['qaip_css_center'],
-		));
+		$this->template->assign_vars([
+			'S_QAIP_CENTER'	=> (bool) $this->config['qaip_css_center'],
+			'S_QAIP'		=> true,
+		]);
 	}
 
 	/**
@@ -176,7 +184,8 @@ class main_listener implements EventSubscriberInterface
 				{
 					foreach ($attach_rows as $attach_row)
 					{
-						$img_link = generate_board_url() . '/download/file.php?id=' . (int) $attach_row['attach_id'];
+						/* Use relative path for the sake of future's proof */
+						$img_link = $this->root_path . 'download/file.php?id=' . (int) $attach_row['attach_id'];
 
 						/* Only images */
 						if (strpos($attach_row['mimetype'], 'image/') !== false)
