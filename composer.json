@@ -3,8 +3,8 @@
 	"type": "phpbb-extension",
 	"description": "Quote images as thumbnails.",
 	"homepage": "https://phpbbstudio.com",
-	"version": "1.0.2-RC",
-	"time": "2019-06-21",
+	"version": "1.1.0",
+	"time": "2019-06-29",
 	"license": "GPL-2.0-only",
 	"authors": [
 		{
