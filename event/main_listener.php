@@ -98,6 +98,7 @@ class main_listener implements EventSubscriberInterface
 	{
 		$this->template->assign_vars([
 			'S_QAIP_CENTER'	=> (bool) $this->config['qaip_css_center'],
+			'S_QAIP'		=> true,
 		]);
 	}
 
