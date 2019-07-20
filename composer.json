@@ -1,10 +1,10 @@
 {
 	"name": "threedi/qaip",
 	"type": "phpbb-extension",
-	"description": "Quote images as thumbnails.",
+	"description": "Quotes and resize attached images only via direct post quoting - not from topic review or copy and paste a quote. Resizes the images posted within IMG BBcode. Each type of attached images are quoted as images. The thumbs originated from images posted within IMG BBcode remains not clickable. Use CSS to center quoted images, selectable in ACP/Posting/post settings, defaulted to No. Quoted images are resized on the fly with CSS. The measure of the thumbnail can be modified in the css. Shipped with the max-height of 250px;. No image's hard-manipulation, images are untouched and all of their attributes preserved. Unlimited nested quotes compliant. Disabling the extension only removes resizing, posts will still show the images at the original size.",
 	"homepage": "https://phpbbstudio.com",
-	"version": "1.1.0",
-	"time": "2019-06-29",
+	"version": "1.2.0",
+	"time": "2019-07-20",
 	"license": "GPL-2.0-only",
 	"authors": [
 		{
@@ -12,6 +12,12 @@
 			"email": "eataly3d@gmail.com",
 			"homepage": "https://phpbbstudio.com",
 			"role": "Lead Developer"
+		},
+		{
+			"name": "mrgoldy",
+			"email": "info@phpbbstudio.com",
+			"homepage": "https://www.phpbbstudio.com",
+			"role": "Developer"
 		}
 	],
 	"require": {

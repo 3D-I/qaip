@@ -1,5 +1,10 @@
 3Di - Quote Attachments Img in Posts - Changes Log
 
+1.2.0 - 20-Jul-2019
+ - FIX - not unique real_filenames : https://github.com/3D-I/qaip/issues/13
+ - update version checker
+ - main logic rewritten (thx mrgoldy)
+
 1.1.0 - 29-Jun-2019
  - Use relative URL
  - update version checker

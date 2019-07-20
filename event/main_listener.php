@@ -26,6 +26,9 @@ class main_listener implements EventSubscriberInterface
 	/** @var \phpbb\db\driver\driver_interface */
 	protected $db;
 
+	/* @var \phpbb\request\request */
+	protected $request;
+
 	/** @var \phpbb\template\template */
 	protected $template;
 
@@ -44,6 +47,7 @@ class main_listener implements EventSubscriberInterface
 	 * @param  \phpbb\auth\auth						$auth					Auth object
 	 * @param  \phpbb\config\config					$config					Config object
 	 * @param  \phpbb\db\driver\driver_interface	$db						Database object
+	 * @param  \phpbb\request\request				$request				Request object
 	 * @param  \phpbb\template\template				$template				Template object
 	 * @param  \phpbb\language\language				$language				Language object
 	 * @param  string								$attachments_table		Attachments table
@@ -55,6 +59,7 @@ class main_listener implements EventSubscriberInterface
 		\phpbb\auth\auth $auth,
 		\phpbb\config\config $config,
 		\phpbb\db\driver\driver_interface $db,
+		\phpbb\request\request $request,
 		\phpbb\template\template $template,
 		\phpbb\language\language $language,
 		$attachments_table,
@@ -64,6 +69,7 @@ class main_listener implements EventSubscriberInterface
 		$this->auth					= $auth;
 		$this->config				= $config;
 		$this->db					= $db;
+		$this->request				= $request;
 		$this->template				= $template;
 		$this->language				= $language;
 
@@ -83,7 +89,7 @@ class main_listener implements EventSubscriberInterface
 		return [
 			'core.page_header_after'				=> 'qaip_template_switch',
 			'core.acp_board_config_edit_add'		=> 'qaip_acp_config',
-			'core.posting_modify_template_vars'		=> 'qaip_quote_img_in_posts',
+			'core.posting_modify_post_data'			=> 'qaip_quote_img_in_posts',
 		];
 	}
 
@@ -134,95 +140,79 @@ class main_listener implements EventSubscriberInterface
 
 	/**
 	 * Brings back to life quoted attachment's image(s)
+	 * No matters if they are links, placed inline or not, thumbnailed or not
 	 *
-	 * @event core.posting_modify_template_vars
+	 * @event core.posting_modify_post_data
 	 * @param  \phpbb\event\data	$event		The event object
 	 * @return void
 	 * @access public
 	 */
 	public function qaip_quote_img_in_posts($event)
 	{
-		$page_data		= $event['page_data'];
-		$message_parser	= $event['message_parser'];
-		$post_data		= $event['post_data'];
-		$mode			= $event['mode'];
-		$post_id		= (int) $event['post_id'];
-		$forum_id		= (int) $event['forum_id'];
-		$submit			= $event['submit'];
-		$preview		= $event['preview'];
-		$refresh		= $event['refresh'];
+		$mode = $event['mode'];
+		$data = $event['post_data'];
 
-		if ($mode == 'quote' && !$submit && !$preview && !$refresh)
+		$post_id	= (int) $event['post_id'];
+		$forum_id	= (int) $event['forum_id'];
+
+		$file_add	= $this->request->is_set_post('add_file');
+		$file_del	= $this->request->is_set_post('delete_file');
+		$preview	= $this->request->is_set_post('preview');
+		$save		= $this->request->is_set_post('save');
+		$load		= $this->request->is_set_post('load');
+		$post		= $this->request->is_set_post('post');
+
+		if ($mode === 'quote' && !$post && !$load && !$save && !$preview && !$file_add && !$file_del)
 		{
-			/* Is it a topic poll? */
-			if (count($post_data['poll_options']) || !empty($post_data['poll_title']))
-			{
-				$post_data_poll = $post_data['post_text'];
-
-				/* Stripping the ending '[/quote]\n' */
-				$post_data_poll = substr_replace($post_data_poll, "[/quote]", - 10);
-				$message_parser->message = "{$post_data_poll}";
-			}
-
 			/* Are BBcodes allowed? */
 			if ($this->config['allow_bbcode'])
 			{
-				$img_open_tag	= ($this->auth->acl_get('f_bbcode', $forum_id) && $this->auth->acl_get('f_img', $forum_id)) ? '[img]' : '';
-				$img_close_tag	= ($this->auth->acl_get('f_bbcode', $forum_id) && $this->auth->acl_get('f_img', $forum_id)) ? '[/img]' : '';
+				$text = $data['post_text'];
 
-				/* Stripping the ending '[/quote]\n' */
-				$message_parser->message = substr($message_parser->message, 0, strlen($message_parser->message) - 10);
+				$rows = array_filter($this->qaip_attach_rows($post_id), function($row) {
+					return strpos($row['mimetype'], 'image/') !== false;
+				});
 
-				/* Retrieve the necessary data to work with */
-				$attach_rows = $this->qaip_attach_rows($post_id);
+				/* Check if the user is allowed to use the IMG bbcode */
+				$img = [
+					'open'	=> $this->auth->acl_get('f_bbcode', $forum_id) && $this->auth->acl_get('f_img', $forum_id) ? '[img]' : '',
+					'close'	=> $this->auth->acl_get('f_bbcode', $forum_id) && $this->auth->acl_get('f_img', $forum_id) ? '[/img]' : '',
+				];
 
-				/**
-				 * Transform quoted attached images as images again
-				 * No matters if they are links, placed inline or not, thumbnailed or not
-				 */
-				if (count($attach_rows))
+				/* Replace INLINE images in the same place where they were placed */
+				if (!empty($rows))
 				{
-					foreach ($attach_rows as $attach_row)
+					$preg = '/<ATTACHMENT filename="[^"]*?" index="(' . implode('|', array_keys($rows)) . ')">.*?<\/ATTACHMENT>/';
+
+					$text = preg_replace_callback(
+						$preg,
+						function($match) use (&$rows, $img) {
+							$id = (int) $match[1];
+
+							/* Use relative path for the sake of future's proof */
+							$link = $this->root_path . 'download/file.php?id=' . (int) $rows[$id]['attach_id'];
+
+							unset($rows[$id]);
+
+							return "[url={$link}&mode=view]{$img['open']}{$link}{$img['close']}[/url]";
+						},
+						$text
+					);
+				}
+				/* Replace NOT-INLINE images each on a new line after the post text */
+				if (!empty($rows))
+				{
+					foreach ($rows as $row)
 					{
 						/* Use relative path for the sake of future's proof */
-						$img_link = $this->root_path . 'download/file.php?id=' . (int) $attach_row['attach_id'];
+						$link = $this->root_path . 'download/file.php?id=' . (int) $row['attach_id'];
 
-						/* Only images */
-						if (strpos($attach_row['mimetype'], 'image/') !== false)
-						{
-							/* If the attachments aren't INLINE there aren't filenames placed in the "post_text" */
-							if (strpos($message_parser->message, $attach_row['real_filename']) === false)
-							{
-								/* Put the quoted image(s) each on a new line after the post text */
-								$message_parser->message .= "\n[url={$img_link}&mode=view]{$img_open_tag}{$img_link}{$img_close_tag}[/url]";
-							}
-							else
-							{
-								/* Replace missing quoted images in the same place they were put INLINE */
-								$message_parser->message = str_replace(
-									$attach_row['real_filename'],
-									"[url={$img_link}&mode=view]{$img_open_tag}{$img_link}{$img_close_tag}[/url]",
-									$message_parser->message
-								);
-							}
-						}
+						$text .= "\n[url={$link}&mode=view]{$img['open']}{$link}{$img['close']}[/url]\n";
 					}
 				}
 
-				/* Destroy array and its associated data */
-				unset($attach_rows);
-
-				/**
-				 * Add back the closing quote tag previously stripped away.
-				 * Basically close back the opened quote prior to send it back to the parser.
-				 */
-				$message_parser->message .= '[/quote]';
-
-				$post_data['post_text'] = $message_parser->message;
-
-				$page_data = array_merge($page_data, ['MESSAGE' => $post_data['post_text']]);
-
-				$event['page_data'] = $page_data;
+				$data['post_text']	= $text;
+				$event['post_data']	= $data;
 			}
 		}
 	}
@@ -238,7 +228,7 @@ class main_listener implements EventSubscriberInterface
 	{
 		$attach_rows = [];
 
-		$sql_attach = 'SELECT attach_id, post_msg_id, real_filename, mimetype
+		$sql_attach = 'SELECT attach_id, real_filename, mimetype
 			FROM ' . $this->attachments_table . '
 			WHERE post_msg_id = ' . (int) $post_id . '
 			ORDER BY attach_id DESC';

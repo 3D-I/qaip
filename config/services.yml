@@ -5,6 +5,7 @@ services:
             - '@auth'
             - '@config'
             - '@dbal.conn'
+            - '@request'
             - '@template'
             - '@language'
             - '%tables.attachments%'
