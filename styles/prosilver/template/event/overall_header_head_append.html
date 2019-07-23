@@ -1,16 +1,13 @@
 {# Include - CSS #}
-{% if S_QAIP %}
 
-	{% if S_QAIP_CENTER %}
-		{% if not definition.INCLUDED_QAIPCENTERCSS %}
-			{% INCLUDECSS '@threedi_qaip/qaip_center.css' %}
-			{% DEFINE INCLUDED_QAIPCENTERCSS = true %}
-		{% endif %}
-	{% else %}
-		{% if not definition.INCLUDED_QAIPCSS %}
-			{% INCLUDECSS '@threedi_qaip/qaip.css' %}
-			{% DEFINE INCLUDED_QAIPCSS = true %}
-		{% endif %}
+{% if S_QAIP_CENTER %}
+	{% if not definition.INCLUDED_QAIPCENTERCSS %}
+		{% INCLUDECSS '@threedi_qaip/qaip_center.css' %}
+		{% DEFINE INCLUDED_QAIPCENTERCSS = true %}
 	{% endif %}
-
+{% else %}
+	{% if not definition.INCLUDED_QAIPCSS %}
+		{% INCLUDECSS '@threedi_qaip/qaip.css' %}
+		{% DEFINE INCLUDED_QAIPCSS = true %}
+	{% endif %}
 {% endif %}

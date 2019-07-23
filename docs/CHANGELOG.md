@@ -1,5 +1,8 @@
 3Di - Quote Attachments Img in Posts - Changes Log
 
+1.2.1 - 23-Jul-2019
+ - SUbmit new version to CDB
+
 1.2.0 - 20-Jul-2019
  - FIX - not unique real_filenames : https://github.com/3D-I/qaip/issues/13
  - update version checker
