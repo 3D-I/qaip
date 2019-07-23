@@ -41,6 +41,9 @@ class main_listener implements EventSubscriberInterface
 	/* @var string phpBB root path */
 	protected $root_path;
 
+	/* @var string phpEx */
+	protected $php_ext;
+
 	/**
 	 * Constructor
 	 *
@@ -52,6 +55,7 @@ class main_listener implements EventSubscriberInterface
 	 * @param  \phpbb\language\language				$language				Language object
 	 * @param  string								$attachments_table		Attachments table
 	 * @param  string								$root_path				phpBB root path
+	 * @param  string								$php_ext				php ext
 	 * @return void
 	 * @access public
 	 */
@@ -63,7 +67,8 @@ class main_listener implements EventSubscriberInterface
 		\phpbb\template\template $template,
 		\phpbb\language\language $language,
 		$attachments_table,
-		$root_path
+		$root_path,
+		$php_ext
 	)
 	{
 		$this->auth					= $auth;
@@ -75,6 +80,7 @@ class main_listener implements EventSubscriberInterface
 
 		$this->attachments_table	= $attachments_table;
 		$this->root_path			= $root_path;
+		$this->php_ext				= $php_ext;
 	}
 
 	/**
@@ -100,12 +106,9 @@ class main_listener implements EventSubscriberInterface
 	 * @return void
 	 * @access public
 	 */
-	public function qaip_template_switch($event)
+	public function qaip_template_switch()
 	{
-		$this->template->assign_vars([
-			'S_QAIP_CENTER'	=> (bool) $this->config['qaip_css_center'],
-			'S_QAIP'		=> true,
-		]);
+		$this->template->assign_var('S_QAIP_CENTER', (bool) $this->config['qaip_css_center']);
 	}
 
 	/**
@@ -162,7 +165,7 @@ class main_listener implements EventSubscriberInterface
 		$load		= $this->request->is_set_post('load');
 		$post		= $this->request->is_set_post('post');
 
-		if ($mode === 'quote' && !$post && !$load && !$save && !$preview && !$file_add && !$file_del)
+		if ($mode == 'quote' && !$post && !$load && !$save && !$preview && !$file_add && !$file_del)
 		{
 			/* Are BBcodes allowed? */
 			if ($this->config['allow_bbcode'])
@@ -190,7 +193,7 @@ class main_listener implements EventSubscriberInterface
 							$id = (int) $match[1];
 
 							/* Use relative path for the sake of future's proof */
-							$link = $this->root_path . 'download/file.php?id=' . (int) $rows[$id]['attach_id'];
+							$link = $this->root_path . 'download/file.' . $this->php_ext . '?id=' . (int) $rows[$id]['attach_id'];
 
 							unset($rows[$id]);
 
@@ -205,14 +208,14 @@ class main_listener implements EventSubscriberInterface
 					foreach ($rows as $row)
 					{
 						/* Use relative path for the sake of future's proof */
-						$link = $this->root_path . 'download/file.php?id=' . (int) $row['attach_id'];
+						$link = $this->root_path . 'download/file.' . $this->php_ext . '?id=' . (int) $row['attach_id'];
 
-						$text .= "\n[url={$link}&mode=view]{$img['open']}{$link}{$img['close']}[/url]\n";
+						$text .= "\n[url={$link}&mode=view]{$img['open']}{$link}{$img['close']}[/url]";
 					}
 				}
 
-				$data['post_text']	= $text;
-				$event['post_data']	= $data;
+				$data['post_text'] = $text;
+				$event['post_data'] = $data;
 			}
 		}
 	}
