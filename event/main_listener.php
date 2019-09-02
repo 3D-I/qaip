@@ -185,7 +185,7 @@ class main_listener implements EventSubscriberInterface
 				/* Replace INLINE images in the same place where they were placed */
 				if (!empty($rows))
 				{
-					$preg = '/<ATTACHMENT filename="[^"]*?" index="(' . implode('|', array_keys($rows)) . ')">.*?<\/ATTACHMENT>/';
+					$preg = '#<ATTACHMENT filename="[^"]*?" index="(' . implode('|', array_keys($rows)) . ')">.*?</ATTACHMENT>#';
 
 					$text = preg_replace_callback(
 						$preg,
@@ -197,7 +197,7 @@ class main_listener implements EventSubscriberInterface
 
 							unset($rows[$id]);
 
-							return "[url={$link}&mode=view]{$img['open']}{$link}{$img['close']}[/url]";
+							return "[url={$link}&amp;mode=view]{$img['open']}{$link}{$img['close']}[/url]";
 						},
 						$text
 					);
