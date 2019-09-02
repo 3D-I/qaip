@@ -210,7 +210,7 @@ class main_listener implements EventSubscriberInterface
 						/* Use relative path for the sake of future's proof */
 						$link = $this->root_path . 'download/file.' . $this->php_ext . '?id=' . (int) $row['attach_id'];
 
-						$text .= "\n[url={$link}&mode=view]{$img['open']}{$link}{$img['close']}[/url]";
+						$text .= "\n[url={$link}&amp;mode=view]{$img['open']}{$link}{$img['close']}[/url]";
 					}
 				}
 
