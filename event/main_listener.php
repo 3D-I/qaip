@@ -210,7 +210,15 @@ class main_listener implements EventSubscriberInterface
 						/* Use relative path for the sake of future's proof */
 						$link = $this->root_path . 'download/file.' . $this->php_ext . '?id=' . (int) $row['attach_id'];
 
+						/* Strip the closing XML tag as being extra content ATM */
+						$xml_close = substr($text, - 4);
+						$text = str_replace($xml_close, '', $text);
+
+						/* Add image link */
 						$text .= "\n[url={$link}&amp;mode=view]{$img['open']}{$link}{$img['close']}[/url]";
+
+						/* Add back the closing XML tag */
+						$text .= $xml_close;
 					}
 				}
 
