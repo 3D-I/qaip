@@ -193,7 +193,7 @@ class main_listener implements EventSubscriberInterface
 							$id = (int) $match[1];
 
 							/* Use relative path for the sake of future's proof */
-							$link = $this->root_path . 'download/file.' . $this->php_ext . '?id=' . (int) $rows[$id]['attach_id'];
+							$link = append_sid($this->root_path . 'download/file.' . $this->php_ext . '?id=' . (int) $rows[$id]['attach_id']);
 
 							unset($rows[$id]);
 
@@ -208,7 +208,7 @@ class main_listener implements EventSubscriberInterface
 					foreach ($rows as $row)
 					{
 						/* Use relative path for the sake of future's proof */
-						$link = $this->root_path . 'download/file.' . $this->php_ext . '?id=' . (int) $row['attach_id'];
+						$link = append_sid($this->root_path . 'download/file.' . $this->php_ext . '?id=' . (int) $row['attach_id']);
 
 						/* Strip the closing XML tag as being extra content ATM */
 						$xml_close = substr($text, - 4);
@@ -237,8 +237,6 @@ class main_listener implements EventSubscriberInterface
 	 */
 	protected function qaip_attach_rows($post_id)
 	{
-		$attach_rows = [];
-
 		$sql_attach = 'SELECT attach_id, real_filename, mimetype
 			FROM ' . $this->attachments_table . '
 			WHERE post_msg_id = ' . (int) $post_id . '
