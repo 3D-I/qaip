@@ -1,7 +1,9 @@
 3Di - Quote Attachments Img in Posts - Changes Log
 
 1.2.2 - 08-Sep-2019
- - Fix bug with URL / QUOTE and the parser
+ - Fix phpBB error when quoting some posts - See: https://github.com/3D-I/qaip/pull/16
+ - Fix location of XML closing tag for non-inlined images  - See: https://github.com/3D-I/qaip/pull/16
+ - Make use of append_sid() for links
  - Code housekeeping
  - Submit new version to CDB
 
