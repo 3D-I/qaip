@@ -1,3 +1,3 @@
 # qaip
 
-![GitHub Releases (by Asset)](https://img.shields.io/github/downloads/3D-I/qaip/v1.2.0/threedi_QAIP_120.zip.svg?color=gree)
+![GitHub Releases (by Asset)](https://img.shields.io/github/downloads/3D-I/qaip/v1.2.2/threedi_QAIP_122.zip.svg?color=gree)
