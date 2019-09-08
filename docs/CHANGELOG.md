@@ -11,7 +11,7 @@
  - Submit new version to CDB
 
 1.2.0 - 20-Jul-2019
- - FIX - not unique real_filenames : https://github.com/3D-I/qaip/issues/13
+ - FIX - not unique real_filenames - See: https://github.com/3D-I/qaip/issues/13
  - update version checker
  - main logic rewritten (thx mrgoldy)
 
@@ -36,7 +36,7 @@
  - remove redundant code
 
 1.0.0-b3 - 24-mar-2017
- - FIX - Topics polls - BUG: ( https://github.com/3D-I/qaip/issues/1 )
+ - FIX - Topics polls - See: https://github.com/3D-I/qaip/issues/1
 
 1.0.0-b2
  - First public release
