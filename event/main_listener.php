@@ -193,7 +193,7 @@ class main_listener implements EventSubscriberInterface
 							$id = (int) $match[1];
 
 							/* Use relative path for the sake of future's proof */
-							$link = append_sid($this->root_path . 'download/file.' . $this->php_ext . '?id=' . (int) $rows[$id]['attach_id']);
+							$link = $this->root_path . 'download/file.' . $this->php_ext . '?id=' . (int) $rows[$id]['attach_id'];
 
 							unset($rows[$id]);
 
