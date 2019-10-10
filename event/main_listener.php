@@ -208,7 +208,7 @@ class main_listener implements EventSubscriberInterface
 					foreach ($rows as $row)
 					{
 						/* Use relative path for the sake of future's proof */
-						$link = append_sid($this->root_path . 'download/file.' . $this->php_ext . '?id=' . (int) $row['attach_id']);
+						$link = $this->root_path . 'download/file.' . $this->php_ext . '?id=' . (int) $row['attach_id'];
 
 						/* Strip the closing XML tag as being extra content ATM */
 						$xml_close = substr($text, - 4);
