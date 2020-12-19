@@ -239,7 +239,7 @@ class main_listener implements EventSubscriberInterface
 	{
 		$sql_attach = 'SELECT attach_id, real_filename, mimetype
 			FROM ' . $this->attachments_table . '
-			WHERE post_msg_id = ' . (int) $post_id . '
+			WHERE post_msg_id = ' . (int) $post_id . ' AND in_message = 0
 			ORDER BY attach_id DESC';
 		$result_attach = $this->db->sql_query($sql_attach);
 		$attach_rows = $this->db->sql_fetchrowset($result_attach);
